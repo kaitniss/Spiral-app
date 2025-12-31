@@ -1,0 +1,466 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Ghost, 
+  Eye, 
+  Brain, 
+  Activity, 
+  Skull, 
+  Zap, 
+  Lock, 
+  TrendingDown, 
+  CheckCircle2, 
+  XCircle,
+  AlertTriangle,
+  Terminal,
+  Menu,
+  X
+} from 'lucide-react';
+
+// --- DATA: THE EXOTIC STATES ---
+const EXOTIC_CATEGORIES = [
+  {
+    id: 'neurotic',
+    title: 'Невротические Компульсии',
+    color: 'text-yellow-400',
+    border: 'border-yellow-400',
+    icon: <Eye />,
+    states: [
+      { id: 1, name: 'Stalker Pro Max', desc: '6+ фейк-аккаунтов. Мониторинг Spotify в 3 ночи. Анализ таймингов WhatsApp.' },
+      { id: 2, name: 'Шизо-Нумерология', desc: 'Видишь 11:11? Это знак. Номер машины 666? Это он думает о тебе. (Нет).' },
+      { id: 3, name: 'What-If Петля', desc: 'Бесконечный рендеринг альтернативной реальности, где вы счастливы.' }
+    ]
+  },
+  {
+    id: 'dissociative',
+    title: 'Диссоциация & Пустота',
+    color: 'text-purple-400',
+    border: 'border-purple-400',
+    icon: <Ghost />,
+    states: [
+      { id: 4, name: 'VR-Режим (Дереализация)', desc: 'Мир — это низкополигональная игра. Ты NPC в собственной жизни.' },
+      { id: 5, name: 'Эмоциональный Флэтлайн', desc: 'Ангедония. Выиграл миллион? Пофиг. Умер котенок? Пофиг.' }
+    ]
+  },
+  {
+    id: 'somatic',
+    title: 'Психосоматический Ад',
+    color: 'text-red-400',
+    border: 'border-red-400',
+    icon: <Activity />,
+    states: [
+      { id: 6, name: 'Фантомные Боли', desc: 'Тахикардия 150 BPM лежа на диване. Ощущение "призрака" в постели.' },
+      { id: 7, name: 'День Сурка (Sleep Paralysis)', desc: 'Просыпаешься счастливым на 1 секунду, потом реальность бьет лопатой.' }
+    ]
+  },
+  {
+    id: 'behavioral',
+    title: 'Поведенческие Глюки',
+    color: 'text-blue-400',
+    border: 'border-blue-400',
+    icon: <Zap />,
+    states: [
+      { id: 8, name: 'Ритуалы Проверки', desc: 'Зайти в профиль, даже если там блок. "Если не проверю — он женится".' },
+      { id: 9, name: 'Амнезия Плохого', desc: 'Мозг удалил все ссоры. Остался только монтаж "Лучшие моменты".' },
+      { id: 10, name: 'Эмоциональное Сальто', desc: 'От "Люблю не могу" до "Сдохни тварь" за 12 минут.' }
+    ]
+  },
+  {
+    id: 'narcissistic',
+    title: 'Проекции & Паранойя',
+    color: 'text-pink-400',
+    border: 'border-pink-400',
+    icon: <Brain />,
+    states: [
+      { id: 11, name: 'Телепатия (Ложная)', desc: '"Я чувствую, что он страдает". Спойлер: он ест бургер.' },
+      { id: 12, name: 'Фантомные Уведомления', desc: 'Телефон молчит, но ты слышишь вибрацию. Это звонит твое отчаяние.' }
+    ]
+  },
+  {
+    id: 'traumatic',
+    title: 'Травма & PTSD',
+    color: 'text-orange-500',
+    border: 'border-orange-500',
+    icon: <AlertTriangle />,
+    states: [
+      { id: 13, name: 'Тень Личности', desc: 'Панические атаки при виде похожей куртки. "Я больше никого не полюблю".' },
+      { id: 14, name: 'Breakup OCD', desc: 'Навязчивое пережевывание каждого конфликта 5-летней давности.' }
+    ]
+  },
+  {
+    id: 'paradox',
+    title: 'Парадоксы',
+    color: 'text-gray-400',
+    border: 'border-gray-400',
+    icon: <Terminal />,
+    states: [
+      { id: 15, name: 'Облегчение + Горе', desc: 'Ты рада, что он ушел, но хочешь умереть от тоски. Логика вышла из чата.' },
+      { id: 16, name: 'Pain Shopping', desc: 'Смотришь его фото с новой бабой, чтобы сделать себе больно. Мазохизм.' }
+    ]
+  }
+];
+
+// --- COMPONENTS ---
+
+const GlitchText = ({ text, className }) => {
+  return (
+    <div className={`relative inline-block ${className}`}>
+      <span className="relative z-10">{text}</span>
+      <span className="absolute top-0 left-0 -ml-0.5 translate-x-[2px] text-red-500 opacity-70 animate-pulse z-0">{text}</span>
+      <span className="absolute top-0 left-0 -ml-0.5 -translate-x-[2px] text-blue-500 opacity-70 animate-pulse delay-75 z-0">{text}</span>
+    </div>
+  );
+};
+
+const StateCard = ({ state, color, border, selected, onClick }) => (
+  <motion.div
+    whileTap={{ scale: 0.95 }}
+    onClick={onClick}
+    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 relative overflow-hidden ${
+      selected 
+        ? `${border} bg-gray-900 shadow-[0_0_15px_rgba(0,0,0,0.5)]` 
+        : 'border-gray-800 bg-gray-950 hover:border-gray-600'
+    }`}
+  >
+    {selected && (
+      <div className={`absolute top-0 right-0 p-1 ${color}`}>
+        <CheckCircle2 size={16} />
+      </div>
+    )}
+    <h4 className={`font-bold text-sm mb-1 ${selected ? color : 'text-gray-300'}`}>{state.name}</h4>
+    <p className="text-xs text-gray-500 leading-tight">{state.desc}</p>
+  </motion.div>
+);
+
+// --- SCREENS ---
+
+const WelcomeScreen = ({ onStart }) => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className="mb-6"
+    >
+      <Skull size={80} className="text-red-500 mx-auto mb-4" />
+      <h1 className="text-5xl md:text-7xl font-black mb-2 tracking-tighter uppercase">
+        <GlitchText text="EXOTIC" /> <span className="text-gray-600">STATES</span>
+      </h1>
+      <p className="text-xl md:text-2xl font-mono text-green-500 mb-8">
+        TRACKER v.2.0 (BROKEN_HEART_EDITION)
+      </p>
+    </motion.div>
+
+    <div className="max-w-xl bg-gray-900/50 p-6 rounded-2xl border border-gray-800 backdrop-blur-sm mb-8">
+      <p className="text-gray-300 mb-4 text-left font-mono text-sm">
+        &gt; DETECTING SYSTEM FAILURE...<br/>
+        &gt; EMOTIONAL CORE COMPROMISED.<br/>
+        &gt; INITIATING DIAGNOSTIC PROTOCOL.<br/>
+        <br/>
+        <span className="text-white font-sans">
+          Мы знаем, что вы делали прошлой ночью. Вы проверяли его статус "в сети". 
+          Давайте превратим вашу одержимость в статистику.
+        </span>
+      </p>
+    </div>
+
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onStart}
+      className="bg-red-600 hover:bg-red-700 text-white font-black py-4 px-12 rounded-full text-xl shadow-lg shadow-red-900/40 uppercase tracking-widest"
+    >
+      Начать Чек-ин
+    </motion.button>
+    <p className="mt-4 text-xs text-gray-600 uppercase">Осторожно: содержит правду</p>
+  </div>
+);
+
+const TrackerScreen = ({ onFinish }) => {
+  const [step, setStep] = useState(1);
+  const [selectedStates, setSelectedStates] = useState([]);
+  const [intensity, setIntensity] = useState(5);
+  const [compulsions, setCompulsions] = useState([]);
+
+  const toggleState = (id) => {
+    if (selectedStates.includes(id)) {
+      setSelectedStates(selectedStates.filter(s => s !== id));
+    } else {
+      setSelectedStates([...selectedStates, id]);
+    }
+  };
+
+  const toggleCompulsion = (comp) => {
+    if (compulsions.includes(comp)) {
+      setCompulsions(compulsions.filter(c => c !== comp));
+    } else {
+      setCompulsions([...compulsions, comp]);
+    }
+  };
+
+  const steps = [
+    { id: 1, title: "1. Выбери своих демонов", subtitle: "Какие 'экзотические состояния' посетили тебя сегодня?" },
+    { id: 2, title: "2. Шкала Отчаяния", subtitle: "Насколько сильно хотелось написать ему 'я скучаю'?" },
+    { id: 3, title: "3. Исповедальня", subtitle: "Честно. Мы никому не скажем." }
+  ];
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="mb-8">
+        <div className="flex justify-between items-end mb-2">
+          <h2 className="text-2xl font-bold text-white">{steps[step-1].title}</h2>
+          <span className="text-gray-500 font-mono">STEP {step}/3</span>
+        </div>
+        <div className="h-1 bg-gray-800 rounded-full">
+          <motion.div 
+            className="h-full bg-green-500 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${(step/3)*100}%` }}
+          />
+        </div>
+        <p className="mt-2 text-gray-400">{steps[step-1].subtitle}</p>
+      </div>
+
+      <div className="min-h-[400px]">
+        {step === 1 && (
+          <div className="space-y-6">
+            {EXOTIC_CATEGORIES.map((cat) => (
+              <div key={cat.id}>
+                <div className={`flex items-center gap-2 mb-3 text-sm font-bold uppercase tracking-wider ${cat.color}`}>
+                  {cat.icon} {cat.title}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {cat.states.map((st) => (
+                    <StateCard 
+                      key={st.id} 
+                      state={st} 
+                      color={cat.color}
+                      border={cat.border}
+                      selected={selectedStates.includes(st.id)}
+                      onClick={() => toggleState(st.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-full max-w-md">
+              <div className="flex justify-between mb-8 text-4xl font-black">
+                <span className="text-green-500">😐</span>
+                <span className="text-yellow-500">😬</span>
+                <span className="text-red-600">🤡</span>
+              </div>
+              <input 
+                type="range" 
+                min="1" 
+                max="10" 
+                value={intensity} 
+                onChange={(e) => setIntensity(parseInt(e.target.value))}
+                className="w-full h-4 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+              />
+              <div className="mt-8 text-center">
+                <span className="text-6xl font-black text-white">{intensity}</span>
+                <span className="text-xl text-gray-500">/10</span>
+              </div>
+              <div className="mt-4 text-center text-lg font-mono text-red-400">
+                {intensity < 4 && "Терпимо. Ты справляешься."}
+                {intensity >= 4 && intensity < 8 && "Опасно. Убери телефон."}
+                {intensity >= 8 && "CODE RED. Звони подруге, а не ему!"}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            {[
+              "Проверил(а) его соцсети (Stalking)",
+              "Создал(а) фейк аккаунт",
+              "Искал(а) скрытый смысл в его лайках",
+              "Перечитывал(а) старые переписки",
+              "Написал(а) черновик сообщения",
+              "Смотрел(а) Таро расклады на YouTube"
+            ].map((comp, idx) => (
+              <div 
+                key={idx}
+                onClick={() => toggleCompulsion(comp)}
+                className={`p-4 rounded-lg border flex items-center justify-between cursor-pointer ${
+                  compulsions.includes(comp) 
+                    ? 'bg-red-900/20 border-red-500 text-white' 
+                    : 'bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800'
+                }`}
+              >
+                <span>{comp}</span>
+                {compulsions.includes(comp) ? <XCircle className="text-red-500" /> : <div className="w-5 h-5 rounded-full border border-gray-600" />}
+              </div>
+            ))}
+            
+            <div className="mt-8 p-4 bg-green-900/20 border border-green-600 rounded-lg">
+              <h4 className="text-green-400 font-bold mb-2">Твоя победа сегодня:</h4>
+              <select className="w-full bg-black border border-green-800 rounded p-2 text-white">
+                <option>Я не написал(а) ему</option>
+                <option>Я не заходил(а) на его страницу</option>
+                <option>Я поел(а) впервые за день</option>
+                <option>Я удалил(а) наш чат</option>
+                <option>Я просто выжил(а)</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-8 flex justify-between pt-4 border-t border-gray-800">
+        <button 
+          onClick={() => step > 1 && setStep(step - 1)}
+          className={`px-6 py-3 rounded-lg font-bold ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-gray-400 hover:text-white'}`}
+        >
+          Назад
+        </button>
+        <button 
+          onClick={() => step < 3 ? setStep(step + 1) : onFinish()}
+          className="bg-white text-black px-8 py-3 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+        >
+          {step === 3 ? 'Завершить День' : 'Далее'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const DashboardScreen = ({ onReset }) => (
+  <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="md:col-span-2 bg-gray-900 p-6 rounded-2xl border border-gray-800">
+        <h3 className="text-gray-400 font-mono text-xs uppercase mb-4">Еженедельный отчет</h3>
+        <div className="flex items-end space-x-2 h-40">
+          {[40, 65, 30, 85, 50, 20, 10].map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col justify-end group">
+              <div 
+                className="w-full bg-gradient-to-t from-red-900 to-red-500 rounded-t-sm transition-all duration-300 group-hover:opacity-80"
+                style={{ height: `${h}%` }}
+              ></div>
+              <span className="text-center text-xs text-gray-600 mt-2">{['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'][i]}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-sm text-gray-400">
+          Пик безумия пришелся на <span className="text-white font-bold">Четверг (3:00 AM)</span>. Вероятно, ты увидела, что он лайкнул фото девушки с челкой.
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        <div className="bg-gray-900 p-6 rounded-2xl border border-green-900">
+          <h3 className="text-green-500 font-bold mb-1">Streak: 3 дня</h3>
+          <p className="text-xs text-gray-500">Без прямых контактов</p>
+          <div className="flex mt-3 space-x-1">
+            <div className="w-full h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-full h-2 bg-green-500 rounded-full animate-pulse delay-75"></div>
+            <div className="w-full h-2 bg-green-500 rounded-full animate-pulse delay-150"></div>
+            <div className="w-full h-2 bg-gray-700 rounded-full"></div>
+            <div className="w-full h-2 bg-gray-700 rounded-full"></div>
+          </div>
+        </div>
+
+        <div className="bg-gray-900 p-6 rounded-2xl border border-purple-900">
+          <h3 className="text-purple-400 font-bold mb-1">Диагноз недели</h3>
+          <p className="text-sm text-white font-mono">"Obsessive Reassurance Seeker"</p>
+          <p className="text-xs text-gray-500 mt-2">Ты ищешь знаки там, где их нет. Остынь.</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="bg-black border border-gray-800 p-6 rounded-xl">
+      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <Terminal size={20} /> РЕКОМЕНДАЦИЯ AI:
+      </h3>
+      <div className="font-mono text-green-500 text-sm md:text-base space-y-2">
+        <p>&gt; ANALYZING COMPULSIONS... DONE.</p>
+        <p>&gt; DETECTED PATTERN: "Spotify Stalking".</p>
+        <p>&gt; SOLUTION: Хватит думать, что песня "Creep" посвящена тебе. Он просто любит Radiohead. Заблокируй его везде и иди спать.</p>
+        <p className="text-gray-500 mt-4">System Status: Waiting for relapse...</p>
+      </div>
+    </div>
+
+    <button 
+      onClick={onReset}
+      className="mt-8 w-full py-4 text-center text-gray-500 hover:text-white transition-colors"
+    >
+      Вернуться на главную (Новый день)
+    </button>
+  </div>
+);
+
+// --- MAIN APP ---
+
+const App = () => {
+  const [view, setView] = useState('welcome'); // welcome, tracker, dashboard
+
+  return (
+    <div className="min-h-screen bg-black text-gray-200 font-sans selection:bg-red-500 selection:text-white">
+      {/* Header */}
+      <nav className="border-b border-gray-900 p-4 sticky top-0 bg-black/80 backdrop-blur-md z-50">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2 font-black tracking-tighter text-xl cursor-pointer" onClick={() => setView('welcome')}>
+            <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-black">
+              <TrendingDown size={18} />
+            </div>
+            <span>SPIRAL<span className="text-red-600">.APP</span></span>
+          </div>
+          <div className="flex space-x-4 text-sm font-mono text-gray-500">
+            <span className="hidden md:inline">STATUS: UNSTABLE</span>
+            <Menu className="md:hidden" />
+          </div>
+        </div>
+      </nav>
+
+      {/* Content */}
+      <main className="relative">
+        <AnimatePresence mode="wait">
+          {view === 'welcome' && (
+            <motion.div 
+              key="welcome"
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+            >
+              <WelcomeScreen onStart={() => setView('tracker')} />
+            </motion.div>
+          )}
+
+          {view === 'tracker' && (
+            <motion.div 
+              key="tracker"
+              initial={{ y: 20, opacity: 0 }} 
+              animate={{ y: 0, opacity: 1 }} 
+              exit={{ y: -20, opacity: 0 }}
+            >
+              <TrackerScreen onFinish={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'dashboard' && (
+            <motion.div 
+              key="dashboard"
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 1.05, opacity: 0 }}
+            >
+              <DashboardScreen onReset={() => setView('welcome')} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-900 mt-12 py-8 text-center text-gray-700 text-xs font-mono">
+        <p>BASED ON REDDIT RESEARCH (unfortunately real)</p>
+        <p className="mt-2">© 2025 SPIRAL INDUSTRIES. WE MONETIZE YOUR TEARS.</p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
