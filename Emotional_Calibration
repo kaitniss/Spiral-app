@@ -1,0 +1,122 @@
+import React, { useState } from 'react';
+import { Shield, Zap, ArrowRight, AlertTriangle, Heart } from 'lucide-react';
+
+const OnboardingModeSelector = () => {
+  const [selectedMode, setSelectedMode] = useState(null);
+
+  const handleContinue = () => {
+    if (!selectedMode) return;
+    console.log(`User selected mode: ${selectedMode}`);
+    // Здесь логика перехода к следующему шагу или сохранение настройки
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center p-6 font-sans">
+      
+      {/* Header */}
+      <div className="max-w-md w-full mb-8 text-center space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Калибровка системы
+        </h1>
+        <p className="text-zinc-400 text-sm">
+          Твое состояние меняется. Выбери, как Spiral должен разговаривать с тобой прямо сейчас.
+        </p>
+      </div>
+
+      {/* Selection Cards */}
+      <div className="max-w-md w-full grid gap-4 mb-8">
+        
+        {/* Option 1: Reality Check */}
+        <button
+          onClick={() => setSelectedMode('REALITY_CHECK')}
+          className={`relative group p-6 rounded-2xl border-2 text-left transition-all duration-300 ${
+            selectedMode === 'REALITY_CHECK'
+              ? 'bg-zinc-900 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
+              : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+          }`}
+        >
+          <div className="flex justify-between items-start mb-3">
+            <div className={`p-3 rounded-full ${selectedMode === 'REALITY_CHECK' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-800 text-zinc-500'}`}>
+              <Zap size={24} />
+            </div>
+            {selectedMode === 'REALITY_CHECK' && (
+              <span className="bg-red-500 text-black text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                Selected
+              </span>
+            )}
+          </div>
+          <h3 className="text-xl font-bold text-white mb-1">Reality Check</h3>
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            Жестко. Цинично. Без жалости.
+            <br />
+            <span className="text-xs opacity-70 italic">"Скажи мне правду, даже если это больно."</span>
+          </p>
+          <div className="mt-4 flex gap-2">
+             <span className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-300">Reddit Style</span>
+             <span className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-300">No Filter</span>
+          </div>
+        </button>
+
+        {/* Option 2: Safe Space */}
+        <button
+          onClick={() => setSelectedMode('SAFE_SPACE')}
+          className={`relative group p-6 rounded-2xl border-2 text-left transition-all duration-300 ${
+            selectedMode === 'SAFE_SPACE'
+              ? 'bg-zinc-900 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+              : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+          }`}
+        >
+          <div className="flex justify-between items-start mb-3">
+            <div className={`p-3 rounded-full ${selectedMode === 'SAFE_SPACE' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
+              <Shield size={24} />
+            </div>
+            {selectedMode === 'SAFE_SPACE' && (
+              <span className="bg-emerald-500 text-black text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                Selected
+              </span>
+            )}
+          </div>
+          <h3 className="text-xl font-bold text-white mb-1">Safe Space</h3>
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            Бережно. Мягко. С поддержкой.
+            <br />
+            <span className="text-xs opacity-70 italic">"Мне плохо, мне нужно, чтобы меня выслушали."</span>
+          </p>
+          <div className="mt-4 flex gap-2">
+             <span className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-300">Therapy Mode</span>
+             <span className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-300">Calm</span>
+          </div>
+        </button>
+
+      </div>
+
+      {/* Action Button */}
+      <div className="max-w-md w-full">
+        <button
+          disabled={!selectedMode}
+          onClick={handleContinue}
+          className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 ${
+            selectedMode
+              ? 'bg-white text-black hover:scale-[1.02] active:scale-[0.98]'
+              : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+          }`}
+        >
+          Продолжить
+          <ArrowRight size={20} />
+        </button>
+        
+        {/* Disclaimer */}
+        <div className="mt-6 flex items-start gap-2 px-4 opacity-50">
+           <AlertTriangle size={14} className="text-yellow-500 shrink-0 mt-0.5" />
+           <p className="text-[10px] text-zinc-500 text-center leading-tight">
+             Ты можешь изменить режим в любой момент в настройках чата. 
+             Если ты чувствуешь угрозу жизни, Spiral автоматически переключится в SOS-режим.
+           </p>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default OnboardingModeSelector;
