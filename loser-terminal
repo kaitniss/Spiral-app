@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPIRAL_TERMINAL_V1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --toxic-green: #39ff14;
+            --danger-red: #ff0033;
+            --acid-yellow: #ccff00;
+            --void-black: #050505;
+            --term-text: #e0e0e0;
+        }
+
+        body {
+            background-color: var(--void-black);
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--term-text);
+            overflow-x: hidden;
+        }
+
+        /* CRT Effect */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+        }
+        
+        .glow-red {
+            text-shadow: 0 0 5px rgba(255, 0, 51, 0.7);
+        }
+
+        /* Glitch Animation */
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+
+        .glitch-hover:hover {
+            animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
+            color: var(--danger-red);
+        }
+
+        .border-brutal {
+            border: 1px solid #333;
+            box-shadow: 4px 4px 0px #333;
+            transition: all 0.1s;
+        }
+        
+        .border-brutal:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #333;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 350px;
+        }
+    </style>
+</head>
+<body class="pb-20">
+
+    <div class="scanlines"></div>
+
+    <!-- TERMINAL HEADER -->
+    <nav class="border-b border-gray-800 p-4 sticky top-0 bg-black/90 z-40 backdrop-blur-sm">
+        <div class="flex justify-between items-center max-w-4xl mx-auto">
+            <div class="text-sm md:text-base font-bold text-green-500 tracking-tighter">
+                > SYSTEM_STATUS: <span class="text-red-500 animate-pulse">UNSTABLE</span>
+            </div>
+            <div class="flex space-x-4 text-xs md:text-sm">
+                <span class="text-gray-600">[v.0.9.alpha]</span>
+                <span class="text-gray-500 hidden sm:inline">NO_THERAPIST_FOUND</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO: THE CRASH -->
+    <header class="pt-20 pb-12 px-4 text-center max-w-3xl mx-auto">
+        <div class="inline-block border border-red-900 bg-red-900/10 text-red-500 px-2 py-1 text-xs mb-6 uppercase tracking-widest">
+            ⚠ Warning: Cringe Levels Critical
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black mb-6 uppercase leading-none glitch-hover cursor-default">
+            DON'T TEXT HIM.<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-purple-600 glow-red">HE DOESN'T CARE.</span>
+        </h1>
+        <p class="text-gray-400 text-sm md:text-lg mb-8 max-w-xl mx-auto border-l-2 border-gray-700 pl-4 text-left font-mono">
+            > Ты сейчас не в адеквате.<br>
+            > Твоя префронтальная кора оффлайн.<br>
+            > Ты хочешь сделать хуйню. <br>
+            > Мы здесь, чтобы остановить этот поезд.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <button class="border-brutal bg-red-600 text-black font-bold px-8 py-4 uppercase text-sm hover:bg-red-500">
+                [ INITIATE PANIC PROTOCOL ]
+            </button>
+            <button class="border-brutal bg-transparent border-gray-600 text-gray-300 font-bold px-8 py-4 uppercase text-sm hover:text-white hover:border-white">
+                [ READ LOGS ]
+            </button>
+        </div>
+    </header>
+
+    <!-- SECTION: THE EXOTIC STATES (DATA FROM YOUR JS) -->
+    <section class="py-12 px-4 border-t border-gray-900">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-xl font-bold text-yellow-400 mb-8 uppercase flex items-center">
+                <span class="mr-2">></span> DIAGNOSTICS: CURRENT BRAIN ROT
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                
+                <!-- THE ROAST LIST -->
+                <div class="space-y-4 text-xs md:text-sm">
+                    <div class="p-4 border border-yellow-900/50 bg-yellow-900/10 rounded-sm">
+                        <div class="text-yellow-400 font-bold mb-1">[ STALKER PRO MAX ]</div>
+                        <div class="text-gray-400">6+ фейк-аккаунтов. Мониторинг Spotify в 3 ночи. Анализ таймингов WhatsApp.</div>
+                    </div>
+                    
+                    <div class="p-4 border border-purple-900/50 bg-purple-900/10 rounded-sm">
+                        <div class="text-purple-400 font-bold mb-1">[ ШИЗО-НУМЕРОЛОГИЯ ]</div>
+                        <div class="text-gray-400">"Я увидела 11:11 на часах, значит он думает обо мне." (Спойлер: Нет).</div>
+                    </div>
+
+                    <div class="p-4 border border-red-900/50 bg-red-900/10 rounded-sm">
+                        <div class="text-red-400 font-bold mb-1">[ WHAT-IF ПЕТЛЯ ]</div>
+                        <div class="text-gray-400">Бесконечный рендеринг альтернативной реальности, где вы счастливы и завели кота.</div>
+                    </div>
+                </div>
+
+                <!-- RADAR CHART -->
+                <div class="border border-gray-800 bg-black p-4 relative">
+                    <div class="absolute top-2 right-2 text-[10px] text-gray-600">LIVE FEED</div>
+                    <div class="chart-container">
+                        <canvas id="exoticChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: THE REALITY CHECK -->
+    <section class="py-12 px-4 border-t border-gray-900 bg-gray-900/20">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-xl font-bold text-blue-400 mb-2 uppercase">
+                > SIMULATION: "JUST ONE TEXT"
+            </h2>
+            <p class="text-gray-500 text-xs mb-8 font-mono">Calculating consequences of your stupidity...</p>
+
+            <div class="border border-gray-800 bg-black p-4">
+                <div class="chart-container h-64">
+                    <canvas id="anxietyLine"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <div class="text-center p-4 border border-red-800 border-dashed">
+                    <div class="text-2xl font-bold text-red-500">3 ч. 12 мин.</div>
+                    <div class="text-[10px] uppercase text-gray-500 tracking-widest mt-1">Среднее время тревоги после "Привет"</div>
+                </div>
+                <div class="text-center p-4 border border-green-800 border-dashed">
+                    <div class="text-2xl font-bold text-green-500">10 мин.</div>
+                    <div class="text-[10px] uppercase text-gray-500 tracking-widest mt-1">Время на отпускание с нашим тулом</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: THE PROTOCOL (ASCII STYLE) -->
+    <section class="py-16 px-4">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-xl font-bold text-white mb-8 uppercase glitch-hover">
+                > EXECUTE: DAMAGE CONTROL
+            </h2>
+            
+            <div class="font-mono text-xs md:text-sm text-left space-y-6 bg-black border border-gray-800 p-6 md:p-10 shadow-2xl">
+                <!-- STEP 1 -->
+                <div class="flex gap-4">
+                    <div class="text-green-500 font-bold shrink-0">01_TRIAGE</div>
+                    <div class="text-gray-300">
+                        <span class="bg-gray-800 text-white px-1">INPUT:</span> Ты пьяная, злая или просто скучаешь?<br>
+                        <span class="text-gray-600 italic">>> Мы не лечим. Мы изолируем телефон.</span>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="flex gap-4">
+                    <div class="text-green-500 font-bold shrink-0">02_NUKE</div>
+                    <div class="text-gray-300">
+                        <span class="bg-gray-800 text-white px-1">ACTION:</span> Уничтожение триггеров.<br>
+                        <span class="text-gray-600 italic">>> Тапай по монстрам, пока не отпустит.</span>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="flex gap-4">
+                    <div class="text-green-500 font-bold shrink-0">03_RESET</div>
+                    <div class="text-gray-300">
+                        <span class="bg-gray-800 text-white px-1">OUTPUT:</span> Дыхание 4-4-4-4.<br>
+                        <span class="text-gray-600 italic">>> Вымываем кортизол, возвращаем достоинство.</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-dashed border-gray-700 mt-4 pt-4 text-center">
+                    <button class="bg-green-600 hover:bg-green-500 text-black font-bold py-2 px-12 uppercase text-sm border-brutal w-full md:w-auto">
+                        [ START: SAVING YOUR DIGNITY ]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER: THE BUILD LOG -->
+    <footer class="border-t border-gray-800 py-12 px-4 mt-12 bg-gray-900/30">
+        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 text-xs font-mono">
+            <div>
+                <div class="text-white font-bold mb-4 uppercase">> BUILD_LOG (PUBLIC)</div>
+                <ul class="space-y-2 text-gray-500">
+                    <li><span class="text-green-500">[DONE]</span> Коддинг таймера (пока я ревела)</li>
+                    <li><span class="text-yellow-500">[WIP]</span> Чат-бот, который не игнорит</li>
+                    <li><span class="text-red-500">[TODO]</span> Сделать так, чтобы Kickstarter взлетел</li>
+                </ul>
+            </div>
+            <div class="text-right flex flex-col justify-between">
+                <div>
+                    <div class="text-white font-bold mb-2 uppercase">FUND THE CHAOS</div>
+                    <p class="text-gray-500 mb-4">Помоги мне допилить это, вместо того чтобы писать бывшему.</p>
+                    <a href="#" class="text-green-400 hover:text-green-300 underline decoration-dashed">>> PATREON / BOOSTY <<</a>
+                </div>
+                <div class="mt-8 text-gray-700">
+                    SPIRAL_APP © 2026. <br>
+                    NOT THERAPY. NOT DATING. JUST SURVIVAL.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- CONFIG: TERMINAL STYLE CHART ---
+        Chart.defaults.color = '#666';
+        Chart.defaults.font.family = "'JetBrains Mono', monospace";
+        
+        // --- 1. EXOTIC STATES RADAR (DATA FROM UPLOADED FILE) ---
+        const ctxRadar = document.getElementById('exoticChart').getContext('2d');
+        
+        // Labels from your JS file
+        const stateLabels = [
+            'Stalker Pro Max', 
+            'Шизо-Нумерология', 
+            'What-If Петля', 
+            'Архивариус Боли', 
+            'Текстовый Гоблин'
+        ];
+
+        new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: stateLabels,
+                datasets: [{
+                    label: 'CURRENT LEVEL',
+                    data: [90, 45, 80, 20, 60], // High Stalking, High What-If
+                    backgroundColor: 'rgba(57, 255, 20, 0.2)', // Toxic Green
+                    borderColor: '#39ff14',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#000',
+                    pointBorderColor: '#39ff14',
+                    pointHoverBackgroundColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#1a1a1a' }, // Dark grid
+                        grid: { color: '#1a1a1a' },
+                        pointLabels: {
+                            color: (context) => {
+                                // Highlight specific labels
+                                return context.label.includes('Stalker') ? '#ff0033' : '#a3a3a3';
+                            },
+                            font: { size: 10 }
+                        },
+                        ticks: { display: false, backdropColor: 'transparent' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#000',
+                        titleColor: '#39ff14',
+                        bodyColor: '#fff',
+                        borderColor: '#333',
+                        borderWidth: 1,
+                        cornerRadius: 0,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                // CUSTOM ROASTS BASED ON VALUE
+                                const val = context.raw;
+                                if (val > 80) return `>> CRITICAL: STOP REFRESHING THE PAGE`;
+                                if (val > 50) return `>> WARNING: You look desperate`;
+                                return `>> STABLE (for now)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- 2. ANXIETY LINE CHART (REALITY CHECK) ---
+        const ctxLine = document.getElementById('anxietyLine').getContext('2d');
+        
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['Send Text', 'Read (No reply)', '10m', '30m', '1h', '3h'],
+                datasets: [{
+                    label: 'SELF-RESPECT',
+                    data: [100, 10, 5, 2, 0, -10],
+                    borderColor: '#ff0033', // Red for danger
+                    borderDash: [5, 5],
+                    tension: 0.1,
+                    pointRadius: 0
+                },
+                {
+                    label: 'ANXIETY',
+                    data: [20, 90, 95, 100, 100, 100],
+                    borderColor: '#ccff00', // Acid Yellow
+                    backgroundColor: 'rgba(204, 255, 0, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: '#1a1a1a' } },
+                    y: { display: false, grid: { color: '#1a1a1a' } }
+                },
+                plugins: {
+                    legend: { 
+                        labels: { color: '#666', boxWidth: 10, usePointStyle: true, pointStyle: 'rect' } 
+                    },
+                    tooltip: {
+                        backgroundColor: '#000',
+                        borderColor: '#ff0033',
+                        borderWidth: 1,
+                        cornerRadius: 0,
+                        callbacks: {
+                            title: () => 'STATUS UPDATE:'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
