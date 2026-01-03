@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SPIRAL AI - Аутсорсинг Тревожности</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Permanent+Marker&family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						bg: '#0a0a0a',
+						surface: '#121212',
+						primary: '#00ff9d', // Acid Green
+						danger: '#ff3c3c', // Panic Red
+						warning: '#ffe600', // Anxiety Yellow
+						accent: '#d600ff', // Delusion Purple
+					},
+					fontFamily: {
+						sans: ['Urbanist', 'sans-serif'],
+						mono: ['JetBrains Mono', 'monospace'],
+						hand: ['Permanent Marker', 'cursive'],
+					},
+					animation: {
+						'spin-slow': 'spin 12s linear infinite',
+						'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+						'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+						'glitch': 'glitch 1s linear infinite',
+					},
+					keyframes: {
+						shake: {
+							'10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+							'20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+							'30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+							'40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+						},
+						glitch: {
+							'2%, 64%': { transform: 'translate(2px,0) skew(0deg)' },
+							'4%, 60%': { transform: 'translate(-2px,0) skew(0deg)' },
+							'62%': { transform: 'translate(0,0) skew(5deg)' },
+						}
+					}
+				}
+			}
+		}
+	</script>
+	<style>
+		body {
+			background-color: #0a0a0a;
+			color: #e5e5e5;
+			overflow-x: hidden;
+		}
+
+		.noise-bg {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			z-index: 0;
+			opacity: 0.05;
+			background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+		}
+
+		.scanline {
+			width: 100%;
+			height: 2px;
+			background: rgba(0, 255, 157, 0.1);
+			position: fixed;
+			top: 0;
+			left: 0;
+			z-index: 999;
+			animation: scanline 6s linear infinite;
+		}
+
+		@keyframes scanline {
+			0% {
+				top: -10%;
+			}
+
+			100% {
+				top: 110%;
+			}
+		}
+
+		.hand-drawn-border {
+			border: 2px solid #333;
+			border-radius: 2px 255px 3px 25px / 255px 5px 225px 3px;
+		}
+
+		.crt-overlay {
+			background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 100%);
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 5;
+			pointer-events: none;
+		}
+
+		/* Custom Scrollbar */
+		::-webkit-scrollbar {
+			width: 8px;
+		}
+
+		::-webkit-scrollbar-track {
+			background: #0a0a0a;
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: #333;
+			border-radius: 4px;
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background: #00ff9d;
+		}
+
+		.hidden-step {
+			display: none;
+		}
+	</style>
+</head>
+
+<body class="font-sans antialiased selection:bg-primary selection:text-black">
+
+	<div class="noise-bg"></div>
+	<div class="scanline"></div>
+	<div class="crt-overlay"></div>
+
+	<!-- NAVIGATION -->
+	<nav class="fixed w-full z-50 bg-bg/80 backdrop-blur-md border-b border-white/10">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="flex items-center justify-between h-16">
+				<div class="flex items-center pgap-2">
+					<i class="fa-solid fa-spinner fa-spin text-primary"></i>
+					<span class="font-bold text-xl tracking-tighter">SPIRAL<span class="text-primary">.AI</span></span>
+				</div>
+				<div class="hidden md:block">
+					<div class="ml-10 flex items-baseline space-x-4">
+						<a href="#problem" class="hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">Боль</a>
+						<a href="#demo" class="hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">Демо</a>
+						<a href="#roadmap" class="hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">Планы</a>
+						<a href="#donate" class="bg-primary text-black hover:bg-white px-4 py-2 rounded-md text-sm font-bold transition-all shadow-[0_0_10px_rgba(0,255,157,0.3)]">
+							<i class="fa-solid fa-heart mr-2"></i>Поддержать
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<!-- HERO SECTION -->
+	<section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden z-10">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+
+			<!-- Floating Elements -->
+			<div class="absolute top-0 left-10 animate-spin-slow opacity-20 hidden lg:block">
+				<i class="fa-solid fa-circle-notch text-9xl text-accent"></i>
+			</div>
+			<div class="absolute bottom-10 right-10 opacity-20 hidden lg:block rotate-12">
+				<i class="fa-regular fa-face-dizzy text-8xl text-danger"></i>
+			</div>
+
+			<div class="inline-block mb-4 px-4 py-1 rounded-full border border-warning/50 bg-warning/10 text-warning font-mono text-sm">
+				⚠️ BETA: Может вызвать привыкание к здравому смыслу
+			</div>
+
+			<h1 class="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 leading-none">
+				Аутсорсинг твоей <br>
+				<span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent relative">
+					Тревожности
+					<svg class="absolute w-full h-3 -bottom-1 left-0 text-primary opacity-70" viewBox="0 0 200 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M2.00025 6.99997C2.00025 6.99997 36.9174 1.10427 100.917 1.10427C164.917 1.10427 197.917 7.10425 197.917 7.10425" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+					</svg>
+				</span>
+			</h1>
+
+			<p class="mt-4 max-w-2xl mx-auto text-xl text-gray-400 font-light">
+				Твои друзья устали анализировать твои переписки. <br>
+				<span class="text-white font-medium">SPIRAL AI</span> прочитает скриншоты твоего бывшего и скажет правду, какой бы горькой она ни была.
+			</p>
+
+			<div class="mt-10 flex justify-center gap-4">
+				<button onclick="document.getElementById('demo').scrollIntoView({behavior: 'smooth'})" class="group relative px-8 py-4 bg-primary text-black font-bold text-lg rounded-lg overflow-hidden transition-all hover:scale-105 shadow-[0_0_20px_rgba(0,255,157,0.4)]">
+					<span class="relative z-10 flex items-center gap-2">
+						ПОПРОБОВАТЬ БЕСПЛАТНО
+						<i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+					</span>
+					<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+				</button>
+				<button onclick="document.getElementById('roadmap').scrollIntoView({behavior: 'smooth'})" class="px-8 py-4 border border-white/20 hover:bg-white/5 text-white font-medium text-lg rounded-lg transition-all">
+					Как это работает?
+				</button>
+			</div>
+
+			<p class="mt-6 text-sm text-gray-500 font-mono">
+				*Мы не несем ответственности, если вы расстанетесь.
+			</p>
+		</div>
+	</section>
+
+	<!-- PROBLEM SECTION (The Spiral) -->
+	<section id="problem" class="py-20 bg-surface border-y border-white/5 relative z-10">
+		<div class="max-w-6xl mx-auto px-4">
+			<h2 class="text-3xl md:text-5xl font-bold text-center mb-16">Знакомый сценарий?</h2>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+				<!-- Step 1 -->
+				<div class="hand-drawn-border bg-bg p-6 relative group hover:-translate-y-2 transition-transform duration-300">
+					<div class="absolute -top-4 -left-4 bg-danger text-white font-hand text-xl px-4 py-1 rotate-[-10deg] shadow-lg">
+						3:47 УТРА
+					</div>
+					<div class="text-6xl mb-4 text-center">📱</div>
+					<h3 class="text-xl font-bold mb-2">Ты отправила мем</h3>
+					<p class="text-gray-400 text-sm">Смешной, но с тонким намеком на вашу общую травму.</p>
+				</div>
+
+				<!-- Arrow Desktop -->
+				<div class="hidden md:flex items-center justify-center text-gray-600">
+					<i class="fa-solid fa-arrow-right text-4xl animate-pulse"></i>
+				</div>
+
+				<!-- Step 2 -->
+				<div class="hand-drawn-border bg-bg p-6 relative group hover:-translate-y-2 transition-transform duration-300">
+					<div class="absolute -top-4 -right-4 bg-warning text-black font-hand text-xl px-4 py-1 rotate-[5deg] shadow-lg">
+						ПРОШЛО 4 МИНУТЫ
+					</div>
+					<div class="text-6xl mb-4 text-center">👀</div>
+					<h3 class="text-xl font-bold mb-2">Он онлайн</h3>
+					<p class="text-gray-400 text-sm">Но не читает. Он смотрит сторис той девчонки с йоги?</p>
+				</div>
+			</div>
+
+			<div class="flex justify-center my-8 md:hidden">
+				<i class="fa-solid fa-arrow-down text-4xl text-gray-600 animate-pulse"></i>
+			</div>
+
+			<!-- The Spiral Core -->
+			<div class="mt-12 bg-black border border-danger/30 rounded-2xl p-8 md:p-12 text-center relative overflow-hidden group">
+				<div class="absolute inset-0 bg-danger/5 group-hover:bg-danger/10 transition-colors"></div>
+				<h3 class="text-2xl md:text-4xl font-black text-danger mb-4 tracking-widest font-mono">
+					<i class="fa-solid fa-triangle-exclamation mr-2"></i> PANIC MODE
+				</h3>
+				<p class="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+					"Надо удалить. Нет, это будет странно. Напишу 'ой не тебе'. Нет, это жалко. Я умру одна."
+				</p>
+
+				<div class="inline-flex items-center gap-4 bg-primary/10 px-6 py-3 rounded-full border border-primary/20">
+					<i class="fa-solid fa-robot text-primary text-xl"></i>
+					<span class="text-primary font-bold">Решение: Делегируй это SPIRAL AI</span>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- INTERACTIVE DEMO -->
+	<section id="demo" class="py-20 relative z-10">
+		<div class="max-w-4xl mx-auto px-4">
+			<div class="text-center mb-12">
+				<h2 class="text-4xl font-bold mb-4">Попробуй Демо</h2>
+				<p class="text-gray-400">Наш AI работает на базе алгоритма "Жестокая Правда v2.0".</p>
+			</div>
+
+			<!-- The "App" Container -->
+			<div class="bg-surface border border-gray-700 rounded-xl overflow-hidden shadow-2xl max-w-md mx-auto relative">
+				<!-- App Header -->
+				<div class="bg-[#1a1a1a] p-4 flex justify-between items-center border-b border-gray-800">
+					<div class="font-bold font-mono">SPIRAL_BETA.exe</div>
+					<div class="flex gap-2">
+						<div class="w-3 h-3 rounded-full bg-red-500"></div>
+						<div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+						<div class="w-3 h-3 rounded-full bg-green-500"></div>
+					</div>
+				</div>
+
+				<!-- App Content -->
+				<div class="p-6 h-[400px] flex flex-col relative" id="app-screen">
+
+					<!-- State 1: Upload (Fake) -->
+					<div id="state-upload" class="flex flex-col items-center justify-center h-full text-center space-y-6">
+						<div class="w-24 h-24 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary hover:text-primary transition-colors group">
+							<i class="fa-solid fa-upload text-3xl text-gray-500 group-hover:text-primary transition-colors"></i>
+						</div>
+						<div>
+							<h3 class="text-lg font-bold">Загрузи скриншот</h3>
+							<p class="text-xs text-gray-500 mt-2">Или выбери сценарий ниже, если у тебя лапки</p>
+						</div>
+						<div class="grid grid-cols-1 gap-2 w-full">
+							<button onclick="runSimulation('ghost')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded text-sm text-left border border-gray-700 hover:border-primary transition-all">
+								👻 Меня игнорят 3 часа
+							</button>
+							<button onclick="runSimulation('dry')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded text-sm text-left border border-gray-700 hover:border-primary transition-all">
+								🌵 Он ответил "Ок" на моё эссе
+							</button>
+							<button onclick="runSimulation('ex')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded text-sm text-left border border-gray-700 hover:border-primary transition-all">
+								💔 Бывший лайкнул сторис
+							</button>
+						</div>
+					</div>
+
+					<!-- State 2: Processing -->
+					<div id="state-processing" class="hidden flex flex-col items-center justify-center h-full space-y-4">
+						<i class="fa-solid fa-spinner fa-spin text-5xl text-primary"></i>
+						<div class="font-mono text-primary text-sm" id="processing-text">Scanning toxic patterns...</div>
+						<div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden mt-4">
+							<div class="h-full bg-primary animate-[width_3s_ease-in-out_infinite]" style="width: 0%"></div>
+						</div>
+					</div>
+
+					<!-- State 3: Result -->
+					<div id="state-result" class="hidden flex flex-col h-full animate-fade-in">
+						<div class="flex-1 overflow-y-auto mb-4">
+							<div class="bg-gray-800/50 p-4 rounded-lg mb-4 border-l-4 border-accent">
+								<div class="text-xs text-gray-500 uppercase mb-1">СИТУАЦИЯ</div>
+								<div id="result-context" class="font-medium text-sm"></div>
+							</div>
+
+							<div class="bg-black p-4 rounded-lg border border-primary/30 shadow-[0_0_15px_rgba(0,255,157,0.1)]">
+								<div class="flex items-center gap-2 mb-2">
+									<i class="fa-solid fa-robot text-primary"></i>
+									<span class="text-primary font-bold text-xs uppercase">AI VERDICT</span>
+								</div>
+								<p id="result-text" class="text-lg leading-relaxed font-hand"></p>
+							</div>
+						</div>
+						<button onclick="resetApp()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 rounded font-bold text-sm transition-colors">
+							Еще один приступ паники?
+						</button>
+					</div>
+
+				</div>
+			</div>
+
+			<div class="text-center mt-8">
+				<p class="text-gray-500 text-sm mb-4">Хочешь реальный анализ своих скринов?</p>
+				<div class="inline-flex items-center gap-2 text-warning animate-pulse">
+					<i class="fa-solid fa-arrow-down"></i>
+					<span class="font-bold font-mono">ПОМОГИ НАМ СОЗДАТЬ ЭТО</span>
+					<i class="fa-solid fa-arrow-down"></i>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ROADMAP / DONATE -->
+	<section id="roadmap" class="py-20 bg-surface border-t border-gray-800 z-10 relative">
+		<div class="max-w-5xl mx-auto px-4">
+			<div class="grid md:grid-cols-2 gap-12 items-center">
+
+				<!-- Text Side -->
+				<div>
+					<h2 class="text-4xl font-bold mb-6">Как это превратится в приложение?</h2>
+					<p class="text-gray-400 mb-8">
+						Прямо сейчас SPIRAL — это я (разработчик) и моя тревожность. Чтобы превратить это в настоящий AI, который спасет ваши нервы, мне нужно кормить серверы (и себя).
+					</p>
+
+					<div class="space-y-6 font-mono text-sm">
+						<div class="flex gap-4">
+							<div class="w-8 flex flex-col items-center">
+								<div class="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_#00ff9d]"></div>
+								<div class="w-0.5 h-full bg-gray-800"></div>
+							</div>
+							<div class="pb-6">
+								<h4 class="text-white font-bold text-lg">Этап 1: The Bait (Сейчас)</h4>
+								<p class="text-gray-500">Лендинг, мемы и сбор базы данных ваших страданий.</p>
+							</div>
+						</div>
+
+						<div class="flex gap-4">
+							<div class="w-8 flex flex-col items-center">
+								<div class="w-3 h-3 rounded-full bg-gray-600"></div>
+								<div class="w-0.5 h-full bg-gray-800"></div>
+							</div>
+							<div class="pb-6">
+								<h4 class="text-gray-400 font-bold text-lg">Этап 2: MVP</h4>
+								<p class="text-gray-600">Реальный OCR (распознавание текста) и AI, обученный на Reddit.</p>
+							</div>
+						</div>
+
+						<div class="flex gap-4">
+							<div class="w-8 flex flex-col items-center">
+								<div class="w-3 h-3 rounded-full bg-gray-600"></div>
+							</div>
+							<div>
+								<h4 class="text-gray-400 font-bold text-lg">Этап 3: Skynet</h4>
+								<p class="text-gray-600">AI пишет бывшему вместо вас и блокирует его.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Donate Card -->
+				<div id="donate" class="bg-bg border-2 border-primary rounded-2xl p-8 relative transform hover:scale-105 transition-transform duration-300 shadow-[0_0_30px_rgba(0,255,157,0.1)]">
+					<div class="absolute -top-5 -right-5 bg-warning text-black font-bold px-4 py-2 rounded-lg rotate-12 shadow-lg font-hand">
+						РАННИЙ ДОСТУП!
+					</div>
+
+					<h3 class="text-2xl font-bold mb-2">Стань Patron'ом Паники</h3>
+					<p class="text-gray-400 mb-6 text-sm">Поддержи разработку на Boosty или Patreon.</p>
+
+					<div class="space-y-4">
+						<a href="#" class="block w-full py-4 bg-[#f95c2e] hover:bg-[#e04b20] text-white text-center font-bold rounded-lg transition-colors flex items-center justify-center gap-3">
+							<i class="fa-solid fa-b"></i> Поддержать на Boosty
+						</a>
+						<a href="#" class="block w-full py-4 bg-[#FF424D] hover:bg-[#e63640] text-white text-center font-bold rounded-lg transition-colors flex items-center justify-center gap-3">
+							<i class="fa-brands fa-patreon"></i> Поддержать на Patreon
+						</a>
+					</div>
+
+					<div class="mt-6 pt-6 border-t border-gray-800 text-center">
+						<p class="text-xs text-gray-500 mb-2">Цель сбора:</p>
+						<div class="w-full bg-gray-800 h-4 rounded-full overflow-hidden">
+							<div class="h-full bg-gradient-to-r from-primary to-accent" style="width: 12%"></div>
+						</div>
+						<div class="flex justify-between text-xs font-mono mt-1 text-gray-400">
+							<span>$120</span>
+							<span>$1000 (MVP Launch)</span>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</section>
+
+	<!-- FOOTER -->
+	<footer class="py-10 text-center text-gray-600 text-sm border-t border-white/5 relative z-10 bg-black">
+		<p class="font-mono mb-2">SPIRAL AI © 2024</p>
+		<p>"Сделано со слезами на глазах и кофеином в крови."</p>
+		<div class="mt-4 flex justify-center gap-4 text-xl">
+			<a href="#" class="hover:text-primary"><i class="fa-brands fa-telegram"></i></a>
+			<a href="#" class="hover:text-primary"><i class="fa-brands fa-twitter"></i></a>
+			<a href="#" class="hover:text-primary"><i class="fa-brands fa-tiktok"></i></a>
+		</div>
+	</footer>
+
+	<!-- SCRIPT FOR DEMO -->
+	<script>
+		const screens = {
+			upload: document.getElementById('state-upload'),
+			processing: document.getElementById('state-processing'),
+			result: document.getElementById('state-result')
+		};
+		const textElements = {
+			processing: document.getElementById('processing-text'),
+			context: document.getElementById('result-context'),
+			result: document.getElementById('result-text')
+		};
+
+		const scenarios = {
+			ghost: {
+				context: "Игнор 3 часа (Он онлайн)",
+				verdicts: [
+					"Вероятность того, что он умер: 0.1%. Вероятность того, что он играет в Доту: 99.9%. Иди спать.",
+					"Он видит твои сообщения в шторке уведомлений и испытывает власть. Не давай ему этого.",
+					"Он просто тупой. Серьезно. Ты придумываешь сложный смысл там, где его нет."
+				]
+			},
+			dry: {
+				context: "Ответ 'Ок' на длинное сообщение",
+				verdicts: [
+					"Это называется 'Emotional Unavailable'. Бросай телефон в стену и ищи нового.",
+					"Перевод с мужского: 'Я прочитал, но мой мозг не способен обработать столько эмоций'.",
+					"Кринж-уровень: 8/10. Никогда больше не пиши ему эссе."
+				]
+			},
+			ex: {
+				context: "Лайк от бывшего в 2 ночи",
+				verdicts: [
+					"Это называется 'Breadcrumbing'. Он кидает крошки внимания, чтобы ты не сорвалась с крючка. Не лайкай в ответ!",
+					"Он пьян. Завтра он об этом пожалеет. Ты тоже пожалеешь, если напишешь.",
+					"Внимание! Обнаружена попытка манипуляции. Рекомендуемое действие: Блокировка."
+				]
+			}
+		};
+
+		const processingSteps = [
+			"Загрузка нейросети...",
+			"Анализ микро-агрессии...",
+			"Сканирование на наличие других баб...",
+			"Вычисление коэффициента жалости...",
+			"Генерация жестокой правды..."
+		];
+
+		function runSimulation(type) {
+			// 1. Switch to processing
+			screens.upload.classList.add('hidden');
+			screens.processing.classList.remove('hidden');
+
+			// 2. Mock processing steps
+			let step = 0;
+			const interval = setInterval(() => {
+				textElements.processing.innerText = processingSteps[step % processingSteps.length];
+				step++;
+			}, 600);
+
+			// 3. Show Result
+			setTimeout(() => {
+				clearInterval(interval);
+				screens.processing.classList.add('hidden');
+				screens.result.classList.remove('hidden');
+
+				const data = scenarios[type];
+				const randomVerdict = data.verdicts[Math.floor(Math.random() * data.verdicts.length)];
+
+				textElements.context.innerText = data.context;
+				textElements.result.innerText = randomVerdict;
+			}, 3000); // 3 seconds "processing"
+		}
+
+		function resetApp() {
+			screens.result.classList.add('hidden');
+			screens.upload.classList.remove('hidden');
+		}
+	</script>
+</body>
+
+</html>
